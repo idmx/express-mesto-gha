@@ -23,6 +23,7 @@
   "homepage": "https://github.com/idmx/express-mesto-gha#readme",
   "dependencies": {
     "body-parser": "^1.20.0",
+    "celebrate": "^15.0.1",
     "express": "^4.17.3",
     "mongoose": "^6.3.1"
   },

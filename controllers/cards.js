@@ -3,12 +3,12 @@ const Card = require('../models/card');
 const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
 const INTERNAL_SERVER_ERROR = 500;
-const DEFAULT_MESSAGE = 'На сервере произошла ошибка'
+const DEFAULT_MESSAGE = 'На сервере произошла ошибка';
 
 module.exports.getCards = (req, res) => {
   Card.find({})
     .then((cards) => res.send(cards))
-    .catch((err) => res.status(INTERNAL_SERVER_ERROR).send({ message: DEFAULT_MESSAGE }));
+    .catch(() => res.status(INTERNAL_SERVER_ERROR).send({ message: DEFAULT_MESSAGE }));
 };
 
 module.exports.deleteCard = (req, res) => {
