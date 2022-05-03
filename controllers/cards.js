@@ -1,4 +1,5 @@
 const Card = require('../models/card');
+const NotFoundError = require('../errors/NotFoundError');
 
 const BAD_REQUEST = 400;
 const NOT_FOUND = 404;
@@ -12,8 +13,15 @@ module.exports.getCards = (req, res) => {
 };
 
 module.exports.deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
-    .then((card) => (card ? res.send(card) : res.status(NOT_FOUND).send({ message: 'Передан несуществующий _id карточки.' })))
+  Card.findById(req.params.cardId)
+    .then((card) => {
+      if (!card) {
+        throw new NotFoundError('Передан несуществующий _id карточки.');
+      }
+      card.owner.toString() === req.user._id
+        ? card.remove() && res.send(card)
+        : res.status(403).send({ message: 'Карточку создал другой пользователь.' });
+    })
     .catch((err) => {
       if (err.name === 'CastError') {
         res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные для удаления карточки.' });
