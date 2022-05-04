@@ -110,10 +110,11 @@ module.exports.createUser = (req, res, next) => {
       .then((hash) => User.create({
         name, about, avatar, email, password: hash,
       })
-        .then((user) => res.send({
-          ...user,
-          password,
-        }))
+        .then((user) => {
+          const newUser = user._doc;
+          delete newUser.password;
+          res.send(newUser);
+        })
         .catch((err) => {
           if (err.name === 'ValidationError') {
             throw new BadRequestError('Переданы некорректные данные при создании профиля.');
@@ -128,7 +129,7 @@ module.exports.createUser = (req, res, next) => {
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
-  return User.findOne({ email }).select('+password')
+  User.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
         return Promise.reject(new Error('Неправильные почта или пароль'));
