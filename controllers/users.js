@@ -111,7 +111,7 @@ module.exports.createUser = (req, res, next) => {
         name, about, avatar, email, password: hash,
       })
         .then((user) => {
-          const newUser = user._doc;
+          const newUser = user.toObject();
           delete newUser.password;
           res.send(newUser);
         })
