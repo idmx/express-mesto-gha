@@ -11,6 +11,10 @@ const { PORT = 3000 } = process.env;
 const app = express();
 const urlRegExp = /^https?:\/\/(www.)?[a-zA-Z0-9-.]+\.[a-zA-Z]{2,}([a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=]+)*#*$/;
 
+/**
+ * Не проходит пара тестов, связанных с JOI, хотя Postman все нормально выдает
+ */
+
 app.use(cookieParser());
 
 mongoose.connect('mongodb://localhost:27017/mestodb', {
