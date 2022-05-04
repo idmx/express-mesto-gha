@@ -1,78 +1,91 @@
 const Card = require('../models/card');
 const NotFoundError = require('../errors/NotFoundError');
+const BadRequestError = require('../errors/BadRequestError');
+const ForbiddenError = require('../errors/ForbiddenError');
 
-const BAD_REQUEST = 400;
-const NOT_FOUND = 404;
-const INTERNAL_SERVER_ERROR = 500;
-const DEFAULT_MESSAGE = 'На сервере произошла ошибка';
-
-module.exports.getCards = (req, res) => {
+module.exports.getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.send(cards))
-    .catch(() => res.status(INTERNAL_SERVER_ERROR).send({ message: DEFAULT_MESSAGE }));
+    .catch(next);
 };
 
-module.exports.deleteCard = (req, res) => {
+module.exports.deleteCard = (req, res, next) => {
   Card.findById(req.params.cardId)
     .then((card) => {
       if (!card) {
         throw new NotFoundError('Передан несуществующий _id карточки.');
       }
-      card.owner.toString() === req.user._id
-        ? card.remove() && res.send(card)
-        : res.status(403).send({ message: 'Карточку создал другой пользователь.' });
+      if (!card.owner.toString() === req.user._id) {
+        throw new ForbiddenError('Карточку создал другой пользователь.');
+      }
+      card.remove();
+      res.send(card);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные для удаления карточки.' });
+        throw new BadRequestError('Переданы некорректные данные для удаления карточки.');
       } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: DEFAULT_MESSAGE });
+        next(err);
       }
-    });
+    })
+    .catch(next);
 };
 
-module.exports.addCardLike = (req, res) => {
+module.exports.addCardLike = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
-    .then((card) => (card ? res.send(card) : res.status(NOT_FOUND).send({ message: 'Передан несуществующий _id карточки.' })))
+    .then((card) => {
+      if (!card) {
+        throw new NotFoundError('Передан несуществующий _id карточки.');
+      }
+      res.send(card);
+    })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные для постановки лайка.' });
+        throw new BadRequestError('Переданы некорректные данные для постановки лайка.');
       } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: DEFAULT_MESSAGE });
+        next(err);
       }
-    });
+    })
+    .catch(next);
 };
 
-module.exports.deleteCardLike = (req, res) => {
+module.exports.deleteCardLike = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
     { new: true },
   )
-    .then((card) => (card ? res.send(card) : res.status(NOT_FOUND).send({ message: 'Передан несуществующий _id карточки.' })))
+    .then((card) => {
+      if (!card) {
+        throw new NotFoundError('Передан несуществующий _id карточки.');
+      }
+      res.send(card);
+    })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные для удаления лайка.' });
+        throw new BadRequestError('Переданы некорректные данные для удаления лайка.');
       } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: DEFAULT_MESSAGE });
+        next(err);
       }
-    });
+    })
+    .catch(next);
 };
 
-module.exports.createCard = (req, res) => {
+module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
 
   Card.create({ name, link, owner: req.user._id })
     .then((card) => res.send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(BAD_REQUEST).send({ message: 'Переданы некорректные данные при создании карточки.' });
+        throw new BadRequestError('Переданы некорректные данные при создании карточки.');
       } else {
-        res.status(INTERNAL_SERVER_ERROR).send({ message: DEFAULT_MESSAGE });
+        next(err);
       }
-    });
+    })
+    .catch(next);
 };
